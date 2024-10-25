@@ -5,6 +5,7 @@
 ### How to run
 - docker compose -f docker-compose-dev.yml watch
 - uv sync
+- cp .env.example .env
 - source .venv/bin/activate
 - alembic upgrade head
 - fastapi dev app/main.py
