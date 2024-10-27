@@ -118,5 +118,6 @@ class Settings(BaseSettings):
 
         return self
 
-
+    OPENAI_API_KEY: str | None = None
+    
 settings = Settings()  # type: ignore

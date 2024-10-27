@@ -6,6 +6,7 @@
 - docker compose -f docker-compose-dev.yml watch
 - uv sync
 - cp .env.example .env
+- Change .env environment(openai api key)
 - source .venv/bin/activate
 - alembic upgrade head
 - fastapi dev app/main.py
