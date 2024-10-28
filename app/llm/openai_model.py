@@ -52,21 +52,17 @@ class OpenAIModel:
         os.remove(f"{directory}/{chatbot_id}_faiss.index")
 
     def ask_by_chatbot_id(self, chatbot_id: str, question: str) -> dict:
-        faiss = self.load_vector_db(chatbot_id)
-        question_vector = self.embedding.embed_query(question)
-
-        results = faiss.similarity_search_by_vector(question_vector, k=5)
-        if results:
-            top_result = results[0]
-
-            return {"answer": top_result.page_content}
-
-        response = self.client.Completion.create(
-            model=self.model_name,
-            prompt=question,
-            max_tokens=150
-        )
-        return {"answer": response.choices[0].text.strip()}
+        try:
+            faiss = self.load_vector_db(chatbot_id)
+            return self.ask_by_faiss(faiss, question)
+        except Exception as e:
+            # Fallback to default response when vector db not found
+            response = self.client.chat.completions.create(
+                model=self.model_name,
+                messages=[{"role": "user", "content": question}],
+                max_tokens=150
+            )
+            return {"answer": response.choices[0].message.content}
 
     def ask_by_faiss(self, faiss: FAISS, question: str) -> dict:
         question_vector = self.embedding.embed_query(question)

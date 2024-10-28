@@ -39,14 +39,8 @@
 # Chat API documentation
 
 - API sẽ có các endpoint sau:
+
   - POST /api/v1/chat: Gửi tin nhắn và nhận phản hồi
-  - POST /api/v1/train: Train chatbot với dữ liệu mới
-  - DELETE /api/v1/chatbot/{chatbot_id}: Xóa dữ liệu của một chatbot
+
 - Bạn có thể test API bằng cách gửi request:
   - POST http://localhost:8000/api/v1/chat
-  - POST http://localhost:8000/api/v1/train
-  - DELETE http://localhost:8000/api/v1/chatbot/{chatbot_id}
-- Lưu ý:
-  - Chatbot_id là tên của chatbot mà bạn muốn gửi tin nhắn.
-  - Bạn có thể lấy chatbot_id bằng cách GET http://localhost:8000/api/v1/chatbot
-  - Session_id là id của phiên trò chuyện, nó sẽ được trả về khi gửi request POST /api/v1/chat

@@ -26,7 +26,10 @@ class ChatService:
         session.messages.append(user_message)
 
         # Lấy câu trả lời từ AI
-        response = self.ai_model.ask(chatbot_id, message)
+        try:
+            response = self.ai_model.ask_by_chatbot_id(chatbot_id, message)
+        except Exception as e:
+            response = {"answer": "Sorry, I'm not trained yet or encountered an error."}
         
         # Lưu câu trả lời của AI
         ai_message = Message(content=response["answer"], role="assistant")
