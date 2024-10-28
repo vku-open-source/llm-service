@@ -38,6 +38,7 @@ class OpenAIModel:
         if not os.path.exists(directory):
             os.makedirs(directory)
         faiss.save_local(f"{directory}/{chatbot_id}_faiss.index")
+        return faiss
 
     def load_vector_db(self, chatbot_id: str):
         directory = f"data/vector_dbs"
@@ -50,19 +51,37 @@ class OpenAIModel:
         directory = f"data/vector_dbs"
         os.remove(f"{directory}/{chatbot_id}_faiss.index")
 
-    def ask(self, chatbot_id: str, question: str) -> dict:
+    def ask_by_chatbot_id(self, chatbot_id: str, question: str) -> dict:
         faiss = self.load_vector_db(chatbot_id)
         question_vector = self.embedding.embed_query(question)
-        
-        results = faiss.similarity_search_by_vector(question_vector, k=5)  
+
+        results = faiss.similarity_search_by_vector(question_vector, k=5)
         if results:
             top_result = results[0]
 
-            return {"answer": top_result.page_content} 
-        
+            return {"answer": top_result.page_content}
+
         response = self.client.Completion.create(
             model=self.model_name,
             prompt=question,
             max_tokens=150
         )
         return {"answer": response.choices[0].text.strip()}
+
+    def ask_by_faiss(self, faiss: FAISS, question: str) -> dict:
+        question_vector = self.embedding.embed_query(question)
+
+        results = faiss.similarity_search_by_vector(question_vector, k=5)
+        if results:
+            top_result = results[0]
+
+            return {"answer": top_result.page_content}
+
+        response = self.client.Completion.create(
+            model=self.model_name,
+            prompt=question,
+            max_tokens=150
+        )
+        return {"answer": response.choices[0].text.strip()}
+    
+openai_model = OpenAIModel()
