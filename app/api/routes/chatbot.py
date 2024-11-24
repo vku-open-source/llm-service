@@ -114,7 +114,7 @@ def delete_chatbot(
     crud.delete_chatbot(session=session, chatbot_id=chatbot_id)
     return Message(message="Chatbot deleted successfully")
 
-@router.post("/train/{chatbot_id}")
+@router.post("/train/{chatbot_id}", response_model=Message)
 async def train_chatbot(
     *,
     session: SessionDep,
@@ -146,9 +146,7 @@ async def train_chatbot(
                 "path": str(file_path),
                 "type": "csv" if file.filename.endswith(".csv") else "text"
             })
-        print("file data: ", file_data) 
         chat_service.ai_model.build_vector_db(str(chatbot_id), file_data)
-        
         # Xóa files in temps sau khi đã xử lý xong
         for file_info in file_data:
             try:
@@ -156,7 +154,11 @@ async def train_chatbot(
             except Exception:
                 pass
                 
-        return Message(message="Training completed successfully")
+        # Sửa lại format return để phù hợp với Message schema
+        return {
+            "role": "assistant",
+            "content": "Training completed successfully"
+        }
     except Exception as e:
         for file_info in file_data:
             try:
