@@ -18,16 +18,24 @@ class ChatService:
         return self._sessions[session_id]
 
     async def chat(self, message: str, chatbot_id: str, session_id: Optional[str] = None) -> ChatResponse:
-        # Lấy hoặc tạo session mới
         session = self._get_or_create_session(session_id, chatbot_id)
-        
-        # Lưu tin nhắn của user
+
         user_message = Message(content=message, role="user")
         session.messages.append(user_message)
 
-        # Lấy câu trả lời từ AI
+        # Chuyển đổi chat history sang format phù hợp với OpenAI
+        chat_history = [
+            {"role": msg.role, "content": msg.content} 
+            for msg in session.messages[:-1]  
+        ]
+
+        # Lấy câu trả lời từ AI với chat history
         try:
-            response = self.ai_model.ask_by_chatbot_id(chatbot_id, message)
+            response = self.ai_model.ask_by_chatbot_id(
+                chatbot_id, 
+                message,
+                chat_history=chat_history
+            )
         except Exception as e:
             response = {"answer": "Sorry, I'm not trained yet or encountered an error."}
         

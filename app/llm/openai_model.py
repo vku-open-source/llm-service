@@ -51,33 +51,44 @@ class OpenAIModel:
         directory = f"data/vector_dbs"
         os.remove(f"{directory}/{chatbot_id}_faiss.index")
 
-    def ask_by_chatbot_id(self, chatbot_id: str, question: str) -> dict:
+    def ask_by_chatbot_id(self, chatbot_id: str, question: str, chat_history: list[dict] = None) -> dict:
         try:
             faiss = self.load_vector_db(chatbot_id)
-            return self.ask_by_faiss(faiss, question)
+            return self.ask_by_faiss(faiss, question, chat_history)
         except Exception as e:
-            # Fallback to default response when vector db not found
+            # Tạo messages từ chat history
+            messages = []
+            if chat_history:
+                messages.extend(chat_history)
+            messages.append({"role": "user", "content": question})
+            
             response = self.client.chat.completions.create(
                 model=self.model_name,
-                messages=[{"role": "user", "content": question}],
+                messages=messages,
                 max_tokens=150
             )
             return {"answer": response.choices[0].message.content}
 
-    def ask_by_faiss(self, faiss: FAISS, question: str) -> dict:
+    def ask_by_faiss(self, faiss: FAISS, question: str, chat_history: list[dict] = None) -> dict:
         question_vector = self.embedding.embed_query(question)
-
         results = faiss.similarity_search_by_vector(question_vector, k=5)
+        
+        # Tạo prompt với context và chat history
+        messages = []
+        if chat_history:
+            messages.extend(chat_history)
+        
         if results:
-            top_result = results[0]
-
-            return {"answer": top_result.page_content}
-
-        response = self.client.Completion.create(
+            context = results[0].page_content
+            messages.append({"role": "system", "content": f"Context: {context}"})
+        
+        messages.append({"role": "user", "content": question})
+        
+        response = self.client.chat.completions.create(
             model=self.model_name,
-            prompt=question,
+            messages=messages,
             max_tokens=150
         )
-        return {"answer": response.choices[0].text.strip()}
+        return {"answer": response.choices[0].message.content}
     
 openai_model = OpenAIModel()
