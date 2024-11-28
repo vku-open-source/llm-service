@@ -1,49 +1,60 @@
 from typing import Optional
 import uuid
-from app.models import ChatSession, Message, ChatResponse
-from app.llm.openai_model import OpenAIModel
+import requests
+from bs4 import BeautifulSoup
+
+from app.llm.openai_model import openai_model
+import requests
+from bs4 import BeautifulSoup
+from app.helper.json import load_json
 
 class ChatService:
     def __init__(self):
-        self._sessions = {}
-        self.ai_model = OpenAIModel()
+        self.openai_model = openai_model
 
-    def _get_or_create_session(self, session_id: Optional[str], chatbot_id: str) -> ChatSession:
-        if not session_id or session_id not in self._sessions:
-            session_id = str(uuid.uuid4())
-            self._sessions[session_id] = ChatSession(
-                id=session_id,
-                chatbot_id=chatbot_id
-            )
-        return self._sessions[session_id]
+    def generate_warning(self) -> dict:
+        url = "https://nchmf.gov.vn/Kttv/vi-VN/1/index.html"
 
-    async def chat(self, message: str, chatbot_id: str, session_id: Optional[str] = None) -> ChatResponse:
-        session = self._get_or_create_session(session_id, chatbot_id)
+        response = requests.get(url)
+        if response.status_code == 200:
+            soup = BeautifulSoup(response.text, 'html.parser')
 
-        user_message = Message(content=message, role="user")
-        session.messages.append(user_message)
+            news_container = soup.find("div", {"id": "left-col"})
 
-        # Chuyển đổi chat history sang format phù hợp với OpenAI
-        chat_history = [
-            {"role": msg.role, "content": msg.content} 
-            for msg in session.messages[:-1]  
-        ]
+            news_items = news_container.find_all("li")
 
-        # Lấy câu trả lời từ AI với chat history
-        try:
-            response = self.ai_model.ask_by_chatbot_id(
-                chatbot_id, 
-                message,
-                chat_history=chat_history
-            )
-        except Exception as e:
-            response = {"answer": "Sorry, I'm not trained yet or encountered an error."}
-        
-        # Lưu câu trả lời của AI
-        ai_message = Message(content=response["answer"], role="assistant")
-        session.messages.append(ai_message)
+            news_list = []
 
-        return ChatResponse(
-            message=response["answer"],
-            session_id=session.id
-        )
+            for item in news_items:
+                title = item.find("a").text.strip()
+
+                link = item.find("a")["href"]
+
+                time_label = item.find("label").text.strip() if item.find("label") else "Không rõ thời gian"
+
+
+                news_list.append({
+                    "title": title,
+                    "link": link,
+                    "time": time_label,
+                })
+            context = ""
+            for news in news_list:
+                context += f"Title: {news['title']}\nLink: {news['link']}\nTime: {news['time']}\n\n"
+            
+        prompt = f"""
+            Please process the following data and return it as an array of JSON objects. Each object should include the following fields:
+            title: The full title of the alert.
+            date: The date extracted from the time field (format: YYYY-MM-DD).
+            time: The time extracted from the time field (format: HH:mm:ss).
+            link: The URL provided in the data.
+            type: The main type of alert (e.g., lũ quét). If there are multiple types, create an array of types.
+            region: The regions mentioned in the alert (e.g. Hà Tĩnh). If there are multiple regions, create an array of regions.
+            Here is the data to process:
+            {context}
+            Respond strictly in JSON format. don't include any other information in the response like 'Here is the processed data as an array of JSON objects:'
+        """
+        answer = self.openai_model.ask_without_faiss(prompt)["answer"]
+        return {
+            "data": load_json(answer)
+            }
