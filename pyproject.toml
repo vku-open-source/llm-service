@@ -28,6 +28,7 @@ dependencies = [
     "langchain-openai>=0.2.3",
     "beautifulsoup4>=4.12.3",
     "bs4>=0.0.2",
+    "pypdf2>=3.0.1",
 ]
 
 [tool.uv]
