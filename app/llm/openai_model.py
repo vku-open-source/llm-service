@@ -1,3 +1,4 @@
+from app.helper.pdf import extract_text_from_pdf
 import openai 
 from langchain.vectorstores.faiss import FAISS
 from langchain.chains.question_answering import load_qa_chain
@@ -16,6 +17,17 @@ class OpenAIModel:
         self.thresh = 0.5
         self.chat_bot = ChatOpenAI(model_name=self.model_name, openai_api_key=settings.OPENAI_API_KEY)
         self.client = OpenAI(openai_api_key=settings.OPENAI_API_KEY)
+        
+    def is_id_exist(self, chatbot_id: str) -> bool:
+        directory = f"data/vector_dbs"
+        return os.path.exists(f"{directory}/{chatbot_id}_faiss.index")
+    
+    def latest_chatbot_id(self) -> str:
+        directory = f"data/vector_dbs"
+        files = os.listdir(directory)
+        if files:
+            return files[-1].split("_")[0]
+        return None
 
     def build_vector_db(self, chatbot_id: str, data_files: list[dict[str, str]]) -> None:
         documents = []
@@ -24,6 +36,11 @@ class OpenAIModel:
             if data_file['type'] == 'csv':
                 loader = CSVLoader(data_file['path'])
                 documents.extend(loader.load())
+            elif data_file['type'] == 'pdf':
+                text = extract_text_from_pdf(data_file['path'])
+                text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+                texts = text_splitter.split_text(text)
+                documents.extend([{"text": txt, "metadata": {"chatbot_id": chatbot_id}} for txt in texts])
             else:
                 with open(data_file['path'], 'r', encoding='utf-8') as file:
                     text = file.read()
@@ -35,8 +52,6 @@ class OpenAIModel:
         faiss = FAISS.from_texts([doc["text"] for doc in documents], embedding=self.embedding)
 
         directory = f"data/vector_dbs"
-        if not os.path.exists(directory):
-            os.makedirs(directory)
         faiss.save_local(f"{directory}/{chatbot_id}_faiss.index")
         return faiss
 
