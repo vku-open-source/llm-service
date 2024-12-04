@@ -1,46 +1,22 @@
 from typing import Optional
 import uuid
-import requests
-from bs4 import BeautifulSoup
 
 from app.llm.openai_model import openai_model
 import requests
 from bs4 import BeautifulSoup
 from app.helper.json import load_json
+from app.helper.crawl_nchmf import crawl_nchmf, crawl_all_news
+from datetime import datetime
 
 class ChatService:
     def __init__(self):
         self.openai_model = openai_model
 
     def generate_warning(self) -> dict:
-        url = "https://nchmf.gov.vn/Kttv/vi-VN/1/index.html"
-
-        response = requests.get(url)
-        if response.status_code == 200:
-            soup = BeautifulSoup(response.text, 'html.parser')
-
-            news_container = soup.find("div", {"id": "left-col"})
-
-            news_items = news_container.find_all("li")
-
-            news_list = []
-
-            for item in news_items:
-                title = item.find("a").text.strip()
-
-                link = item.find("a")["href"]
-
-                time_label = item.find("label").text.strip() if item.find("label") else "Không rõ thời gian"
-
-
-                news_list.append({
-                    "title": title,
-                    "link": link,
-                    "time": time_label,
-                })
-            context = ""
-            for news in news_list:
-                context += f"Title: {news['title']}\nLink: {news['link']}\nTime: {news['time']}\n\n"
+        news_list = crawl_nchmf()
+        context = ""
+        for news in news_list:
+            context += f"Title: {news['title']}\nLink: {news['link']}\nTime: {news['time']}\n\n"
             
         prompt = f"""
             Please process the following data and return it as an array of JSON objects. Each object should include the following fields:
@@ -58,3 +34,19 @@ class ChatService:
         return {
             "data": load_json(answer)
             }
+        
+    def create_chatbot(self) -> str:
+        chatbot_id = datetime.now().strftime("%Y%m%d")
+        if openai_model.is_id_exist(chatbot_id):
+            raise Exception("Chatbot is already created")
+        texts = crawl_all_news()
+        openai_model.build_vector_db_by_text(chatbot_id, texts)
+        
+        return {
+            "message": "Chatbot is created successfully"
+        }
+        
+    def ask_latest_chatbot(self, question: str) -> str:
+        latest_chatbot_id = openai_model.latest_chatbot_id()
+        response = openai_model.ask_by_chatbot_id(latest_chatbot_id, question)
+        return response

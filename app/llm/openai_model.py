@@ -1,3 +1,4 @@
+import re
 from app.helper.pdf import extract_text_from_pdf
 import openai 
 from langchain.vectorstores.faiss import FAISS
@@ -38,16 +39,30 @@ class OpenAIModel:
                 documents.extend(loader.load())
             elif data_file['type'] == 'pdf':
                 text = extract_text_from_pdf(data_file['path'])
-                text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+                text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=500)
                 texts = text_splitter.split_text(text)
                 documents.extend([{"text": txt, "metadata": {"chatbot_id": chatbot_id}} for txt in texts])
             else:
                 with open(data_file['path'], 'r', encoding='utf-8') as file:
                     text = file.read()
 
-                text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+                text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=500)
                 texts = text_splitter.split_text(text)
                 documents.extend([{"text": txt, "metadata": {"chatbot_id": chatbot_id}} for txt in texts])
+
+        faiss = FAISS.from_texts([doc["text"] for doc in documents], embedding=self.embedding)
+
+        directory = f"data/vector_dbs"
+        faiss.save_local(f"{directory}/{chatbot_id}_faiss.index")
+        return faiss
+    
+    def build_vector_db_by_text(self, chatbot_id: str, texts: list[str]) -> None:
+        documents = []
+
+        for text in texts:
+            text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=500)
+            texts = text_splitter.split_text(text)
+            documents.extend([{"text": txt, "metadata": {"chatbot_id": chatbot_id}} for txt in texts])
 
         faiss = FAISS.from_texts([doc["text"] for doc in documents], embedding=self.embedding)
 
@@ -66,40 +81,35 @@ class OpenAIModel:
         directory = f"data/vector_dbs"
         os.remove(f"{directory}/{chatbot_id}_faiss.index")
 
-    def ask_by_chatbot_id(self, chatbot_id: str, question: str) -> dict:
-        try:
-            faiss = self.load_vector_db(chatbot_id)
-            return self.ask_by_faiss(faiss, question)
-        except Exception as e:
-            # Tạo messages từ chat history
-            messages = []
-            messages.append({"role": "user", "content": question})
-            
-            response = self.client.chat.completions.create(
-                model=self.model_name,
-                messages=messages,
-                max_tokens=150
-            )
-            return {"answer": response.choices[0].message.content}
-
     def ask_by_faiss(self, faiss: FAISS, question: str) -> dict:
         question_vector = self.embedding.embed_query(question)
-        results = faiss.similarity_search_by_vector(question_vector, k=5)
-        
-        messages = []
-        
+
+        results = faiss.similarity_search_by_vector(question_vector, k=10)
         if results:
-            context = results[0].page_content
-            messages.append({"role": "system", "content": f"Context: {context}"})
+            top_contexts = [result.page_content.strip() for result in results]
+            context = "\n".join(top_contexts)
+
+            prompt = (
+                f"Context:\n{context}\n\n"
+                f"Question: {question}\n"
+                f"Answer:"
+            )
+            response = self.chat_bot(messages=prompt).content
+            raw_answer = response
+            clean_answer = re.sub(r'\s+', ' ', raw_answer)
+            return {"answer": clean_answer}
+
+        response = self.chat_bot(messages=question).content
         
-        messages.append({"role": "user", "content": question})
-        
-        response = self.client.chat.completions.create(
-            model=self.model_name,
-            messages=messages,
-            max_tokens=150
-        )
-        return {"answer": response.choices[0].message.content}
+        raw_answer = response
+        clean_answer = re.sub(r'\s+', ' ', raw_answer)
+        return {"answer": clean_answer}
+
+    def ask_by_chatbot_id(self, chatbot_id: str, question: str) -> dict:
+        faiss = self.load_vector_db(chatbot_id)
+        return self.ask_by_faiss(faiss, question)
+
+
     
     def ask_without_faiss(self, question: str) -> dict:
         messages = [{"role": "user", "content": question}]
