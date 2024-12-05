@@ -88,6 +88,7 @@ class OpenAIModel:
         if results:
             top_contexts = [result.page_content.strip() for result in results]
             context = "\n".join(top_contexts)
+            print(context)
 
             prompt = (
                 f"Context:\n{context}\n\n"
