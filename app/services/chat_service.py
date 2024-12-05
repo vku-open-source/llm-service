@@ -49,8 +49,9 @@ class ChatService:
                 del data['source']
             if 'stationCode' in data:
                 del data['stationCode']
+            data["Khu vực"] = data.get("label")
             
-        texts.extend([f"Dữ liệu cảnh báo thiên tai ngày {datetime.now().strftime('%d/%m/%Y')}: "+str(data) for data in vndms_data])
+        texts.extend([f"Dữ liệu cảnh báo thiên tai ngày {datetime.now().strftime('%d/%m/%Y')} theo định dạng json: "+str(data) for data in vndms_data])
         print(texts)
         openai_model.build_vector_db_by_text(chatbot_id, texts)
         
