@@ -24,9 +24,10 @@ class OpenAIModel:
         return os.path.exists(f"{directory}/{chatbot_id}_faiss.index")
     
     def latest_chatbot_id(self) -> str:
-        directory = f"data/vector_dbs"
+        directory = "data/vector_dbs"
         files = os.listdir(directory)
         if files:
+            files.sort() 
             return files[-1].split("_")[0]
         return None
 
