@@ -84,7 +84,7 @@ class OpenAIModel:
     def ask_by_faiss(self, faiss: FAISS, question: str) -> dict:
         question_vector = self.embedding.embed_query(question)
 
-        results = faiss.similarity_search_by_vector(question_vector, k=10)
+        results = faiss.similarity_search_by_vector(question_vector, k=20)
         if results:
             top_contexts = [result.page_content.strip() for result in results]
             context = "\n".join(top_contexts)

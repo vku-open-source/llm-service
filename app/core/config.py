@@ -51,5 +51,6 @@ class Settings(BaseSettings):
     SENTRY_DSN: HttpUrl | None = None
 
     OPENAI_API_KEY: str | None = None
+    STRAPI_URL: str | None = None
     
 settings = Settings()  # type: ignore

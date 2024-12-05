@@ -6,6 +6,7 @@ import requests
 from bs4 import BeautifulSoup
 from app.helper.json import load_json
 from app.helper.crawl_nchmf import crawl_nchmf, crawl_all_news
+from app.helper.crawl_vndms import get_vndms_warning_list
 from datetime import datetime
 
 class ChatService:
@@ -40,6 +41,16 @@ class ChatService:
         if openai_model.is_id_exist(chatbot_id):
             raise Exception("Chatbot is already created")
         texts = crawl_all_news()
+        vndms_data = get_vndms_warning_list()
+        for data in vndms_data:
+            if 'popupInfo' in data:
+                del data['popupInfo']
+            if 'source' in data:
+                del data['source']
+            if 'stationCode' in data:
+                del data['stationCode']
+            
+        texts.extend([f"Dữ liệu cảnh báo thiên tai hôm nay(Hôm nay là ngày {datetime.now().strftime('%d/%m/%Y')}): "+str(data) for data in vndms_data])
         openai_model.build_vector_db_by_text(chatbot_id, texts)
         
         return {
