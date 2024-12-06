@@ -61,5 +61,6 @@ class ChatService:
         
     def ask_latest_chatbot(self, question: str) -> str:
         latest_chatbot_id = openai_model.latest_chatbot_id()
+        print(latest_chatbot_id)
         response = openai_model.ask_by_chatbot_id(latest_chatbot_id, question)
         return response
