@@ -42,6 +42,12 @@ class ChatService:
             raise Exception("Chatbot is already created")
         texts = crawl_all_news()
         vndms_data = get_vndms_warning_list()
+        WARNING_TYPE_MAPPING = {
+            "water_level": "Cảnh báo mực nước",
+            "warning_earthquake": "Cảnh báo động đất",
+            "warning_flood": "Cảnh báo lũ quét",
+            "warning_rain": "Cảnh báo lượng mưa",
+        }
         for data in vndms_data:
             if 'popupInfo' in data:
                 del data['popupInfo']
@@ -54,8 +60,7 @@ class ChatService:
                 data["Mức độ cảnh báo"] = data.get("warning_level")
                 del data["warning_level"]
             if "warning_type" in data:
-                data["Loại cảnh báo"] = data.get("warning_type")
-                del data["warning_type"]
+                data["Loại cảnh báo"] = WARNING_TYPE_MAPPING.get(data.get("warning_type"), data.get("warning_type"))
             
         texts.extend([f"Dữ liệu cảnh báo thiên tai ngày {datetime.now().strftime('%d/%m/%Y')} theo định dạng json: "+str(data) for data in vndms_data])
         print(texts)
