@@ -38,12 +38,25 @@ Afterwards, FastAPI automatically generates documentation based on the specifica
 #### 1. API to generate warnings
 - Crawl warnings data from nchmf and process with LLM: [POST]: `/api/v1/chat/generate-warnings`
 
+| Params | Description            | Default |
+| ------ | ---------------------- | ------- |
+| N/A    | No required parameters | N/A     |
+
 
 This API is intended to support generating warning data for the LCDP Backend. The LCDP Backend runs a cron job every day at 0:00 to call this API to get daily warning data.
 
 #### 2. API to generate chatbot by yesterday data
-- : [POST]: `/api/v1/chat/create-chatbot`
+- Crawl data from nchmf and vndms and load into vectorstore: [POST]: `/api/v1/chat/create-chatbot`
+
+| Params | Description            | Default |
+| ------ | ---------------------- | ------- |
+| N/A    | No required parameters | N/A     |
 
 This API aims to crawl data from NCHMF and VNDMS to create a vectorstore to help create the latest information warehouse to feed our AI chatbot. The LCDP Backend runs a cron job every day at 0:00 to call this API to generate new chatbot vectorstore.
 
 #### 2. API to ask the latest chatbot
+- Respond with relevant warning information or other data based on the input question: [POST]: `/api/v1/chat/ask-latest-chatbot`
+
+| Params | Description            | Default |
+| ------ | ---------------------- | ------- |
+| question    | The prompt to ask | N/A     |
