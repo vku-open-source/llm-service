@@ -60,3 +60,15 @@ This API aims to crawl data from NCHMF and VNDMS to create a vectorstore to help
 | Params | Description            | Default |
 | ------ | ---------------------- | ------- |
 | question    | The prompt to ask | N/A     |
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a new Pull Request
+
+## License
+
+This project is licensed under the terms of the [Apache V2.0](https://github.com/vku-open-source/.github/blob/main/profile/LICENSE)
