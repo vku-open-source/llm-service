@@ -69,6 +69,4 @@ This API aims to crawl data from NCHMF and VNDMS to create a vectorstore to help
 4. Push to the branch
 5. Create a new Pull Request
 
-## License
-
 This project is licensed under the terms of the [Apache V2.0](LICENSE)
