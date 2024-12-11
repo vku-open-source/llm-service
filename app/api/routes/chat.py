@@ -25,3 +25,10 @@ async def ask_latest_chatbot(payload: QuestionRequest):
         return chat_service.ask_latest_chatbot(payload.question)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+@router.post("/ask-without-faiss")
+async def ask_without_faiss(payload: QuestionRequest):
+    try:
+        return chat_service.ask_without_faiss(payload.question)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

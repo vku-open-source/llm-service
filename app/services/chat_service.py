@@ -75,3 +75,7 @@ class ChatService:
         print(latest_chatbot_id)
         response = openai_model.ask_by_chatbot_id(latest_chatbot_id, question)
         return response
+    
+    def ask_without_faiss(self, question: str) -> str:
+        response = openai_model.ask_without_faiss(question)
+        return response
