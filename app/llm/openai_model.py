@@ -1,6 +1,6 @@
 import re
 from app.helper.pdf import extract_text_from_pdf
-import openai 
+import openai
 from langchain.vectorstores.faiss import FAISS
 from langchain.chains.question_answering import load_qa_chain
 from langchain_openai import ChatOpenAI, OpenAI
@@ -18,16 +18,16 @@ class OpenAIModel:
         self.thresh = 0.5
         self.chat_bot = ChatOpenAI(model_name=self.model_name, openai_api_key=settings.OPENAI_API_KEY)
         self.client = OpenAI(openai_api_key=settings.OPENAI_API_KEY)
-        
+
     def is_id_exist(self, chatbot_id: str) -> bool:
         directory = f"data/vector_dbs"
         return os.path.exists(f"{directory}/{chatbot_id}_faiss.index")
-    
+
     def latest_chatbot_id(self) -> str:
         directory = "data/vector_dbs"
         files = os.listdir(directory)
         if files:
-            files.sort() 
+            files.sort()
             return files[-1].split("_")[0]
         return None
 
@@ -56,7 +56,7 @@ class OpenAIModel:
         directory = f"data/vector_dbs"
         faiss.save_local(f"{directory}/{chatbot_id}_faiss.index")
         return faiss
-    
+
     def build_vector_db_by_text(self, chatbot_id: str, texts: list[str]) -> None:
         documents = []
 
@@ -73,7 +73,7 @@ class OpenAIModel:
 
     def load_vector_db(self, chatbot_id: str):
         directory = f"data/vector_dbs"
-        faiss = FAISS.load_local(f"{directory}/{chatbot_id}_faiss.index", 
+        faiss = FAISS.load_local(f"{directory}/{chatbot_id}_faiss.index",
                                  embeddings=self.embedding,
                                  allow_dangerous_deserialization=True)
         return faiss
@@ -102,7 +102,7 @@ class OpenAIModel:
             return {"answer": clean_answer}
 
         response = self.chat_bot(messages=question).content
-        
+
         raw_answer = response
         clean_answer = re.sub(r'\s+', ' ', raw_answer)
         return {"answer": clean_answer}
@@ -111,11 +111,9 @@ class OpenAIModel:
         faiss = self.load_vector_db(chatbot_id)
         return self.ask_by_faiss(faiss, question)
 
-
-    
     def ask_without_faiss(self, question: str) -> dict:
         messages = [{"role": "user", "content": question}]
         response = self.chat_bot(messages=messages)
         return {"answer": response.content}
-    
+
 openai_model = OpenAIModel()

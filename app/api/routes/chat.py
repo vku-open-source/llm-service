@@ -5,6 +5,7 @@ from .request_models.chat_request import QuestionRequest
 
 chat_service = ChatService()
 router = APIRouter()
+
 @router.post("/generate-warnings")
 async def chat():
     try:
@@ -18,14 +19,14 @@ async def create_chatbot():
         return chat_service.create_chatbot()
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
+
 @router.post("/ask-latest-chatbot")
 async def ask_latest_chatbot(payload: QuestionRequest):
     try:
         return chat_service.ask_latest_chatbot(payload.question)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
+
 @router.post("/ask-without-faiss")
 async def ask_without_faiss(payload: QuestionRequest):
     try:
