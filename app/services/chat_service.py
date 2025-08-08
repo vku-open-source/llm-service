@@ -36,44 +36,50 @@ class ChatService:
         return {"data": load_json(answer)}
 
     def create_chatbot(self) -> str:
-        chatbot_id = datetime.now().strftime("%Y%m%d")
-        if openai_model.is_id_exist(chatbot_id):
-            raise Exception("Chatbot is already created")
-        texts = crawl_all_news()
-        vndms_data = get_vndms_warning_list()
-        WARNING_TYPE_MAPPING = {
-            "water_level": "Cảnh báo mực nước",
-            "warning_earthquake": "Cảnh báo động đất",
-            "warning_flood": "Cảnh báo lũ quét",
-            "warning_rain": "Cảnh báo lượng mưa",
-        }
-        for data in vndms_data:
-            if "popupInfo" in data:
-                del data["popupInfo"]
-            if "source" in data:
-                del data["source"]
-            if "stationCode" in data:
-                del data["stationCode"]
-            data["Khu vực"] = data.get("label")
-            if "warning_level" in data:
-                data["Mức độ cảnh báo"] = data.get("warning_level")
-                del data["warning_level"]
-            if "warning_type" in data:
-                data["Loại cảnh báo"] = WARNING_TYPE_MAPPING.get(
-                    data.get("warning_type"), data.get("warning_type")
-                )
+        try:
+            #chatbot_id = datetime.now().strftime("%Y%m%d")
+            chatbot_id = "20250809"
+            print('chatbot_id', chatbot_id)
+            if openai_model.is_id_exist(chatbot_id):
+                raise Exception("Chatbot is already created")
+            texts = crawl_all_news()
+            vndms_data = get_vndms_warning_list()
+            WARNING_TYPE_MAPPING = {
+                "water_level": "Cảnh báo mực nước",
+                "warning_earthquake": "Cảnh báo động đất",
+                "warning_flood": "Cảnh báo lũ quét",
+                "warning_rain": "Cảnh báo lượng mưa",
+            }
+            for data in vndms_data:
+                if "popupInfo" in data:
+                    del data["popupInfo"]
+                if "source" in data:
+                    del data["source"]
+                if "stationCode" in data:
+                    del data["stationCode"]
+                data["Khu vực"] = data.get("label")
+                if "warning_level" in data:
+                    data["Mức độ cảnh báo"] = data.get("warning_level")
+                    del data["warning_level"]
+                if "warning_type" in data:
+                    data["Loại cảnh báo"] = WARNING_TYPE_MAPPING.get(
+                        data.get("warning_type"), data.get("warning_type")
+                    )
 
-        texts.extend(
-            [
-                f"Dữ liệu cảnh báo thiên tai ngày {datetime.now().strftime('%d/%m/%Y')} theo định dạng json: "
-                + str(data)
-                for data in vndms_data
-            ]
-        )
-        print("texts", texts)
-        openai_model.build_vector_db_by_text(chatbot_id, texts)
+            texts.extend(
+                [
+                    f"Dữ liệu cảnh báo thiên tai ngày {datetime.now().strftime('%d/%m/%Y')} theo định dạng json: "
+                    + str(data)
+                    for data in vndms_data
+                ]
+            )
+            print("texts", texts)
+            openai_model.build_vector_db_by_text(chatbot_id, texts)
 
-        return {"message": "Chatbot is created successfully"}
+            return {"message": "Chatbot is created successfully"}
+        except Exception as e:
+            print('error', e)
+            raise e
 
     def ask_latest_chatbot(self, question: str) -> str:
         latest_chatbot_id = openai_model.latest_chatbot_id()

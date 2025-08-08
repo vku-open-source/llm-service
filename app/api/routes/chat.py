@@ -18,6 +18,7 @@ async def create_chatbot():
     try:
         return chat_service.create_chatbot()
     except Exception as e:
+        print(e)
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/ask-latest-chatbot")
