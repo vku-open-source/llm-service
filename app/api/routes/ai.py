@@ -1,10 +1,15 @@
 from fastapi import APIRouter, HTTPException
-from app.api.routes.request_models.chat_request import EOPGenerationRequest, TaskGenerationRequest
+from app.api.routes.request_models.chat_request import (
+    EOPGenerationRequest,
+    TaskGenerationRequest,
+)
 from app.services.eop_service import eop_service
 from app.services.task_service import task_service
 from typing import Dict, Any
+from app.core.config import settings
 
 router = APIRouter()
+
 
 @router.post("/generate-eop", response_model=Dict[str, Any])
 async def generate_eop(request: EOPGenerationRequest) -> Dict[str, Any]:
@@ -35,7 +40,7 @@ async def generate_eop(request: EOPGenerationRequest) -> Dict[str, Any]:
         result = await eop_service.generate_eop(
             flood_data=request.flood_data,
             resource_data=request.resource_data,
-            location=request.location
+            location=request.location,
         )
 
         # Check if generation was successful
@@ -48,6 +53,7 @@ async def generate_eop(request: EOPGenerationRequest) -> Dict[str, Any]:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
 
 @router.post("/generate-tasks", response_model=Dict[str, Any])
 async def generate_tasks(request: TaskGenerationRequest) -> Dict[str, Any]:
@@ -66,7 +72,9 @@ async def generate_tasks(request: TaskGenerationRequest) -> Dict[str, Any]:
     try:
         # Validate input data
         if not request.emergency_operations_plan.strip():
-            raise HTTPException(status_code=400, detail="Emergency operations plan is required")
+            raise HTTPException(
+                status_code=400, detail="Emergency operations plan is required"
+            )
 
         if not request.flood_data.strip():
             raise HTTPException(status_code=400, detail="Flood data is required")
@@ -78,7 +86,7 @@ async def generate_tasks(request: TaskGenerationRequest) -> Dict[str, Any]:
         result = await task_service.generate_tasks(
             emergency_operations_plan=request.emergency_operations_plan,
             flood_data=request.flood_data,
-            resource_data=request.resource_data
+            resource_data=request.resource_data,
         )
 
         # Check if generation was successful
@@ -91,3 +99,8 @@ async def generate_tasks(request: TaskGenerationRequest) -> Dict[str, Any]:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@router.get("/test")
+async def test():
+    return {"api_key": settings.OPENAI_API_KEY}

@@ -8,8 +8,8 @@ from typing import Dict, Any
 class EOPService:
     def __init__(self):
         self.llm = ChatOpenAI(
-            model_name="gpt-4o-mini-2024-07-18",
-            # model_name="gpt-5",
+            # model_name="gpt-4o-mini-2024-07-18",
+            model_name="gpt-4o",
             openai_api_key=settings.OPENAI_API_KEY,
             temperature=0.7,
         )
@@ -142,45 +142,6 @@ Using this information, generate an Emergency Operations Plan (EOP) that address
 
 Note: Respond in Vietnamese
             """,
-            #             template="""
-            # You are an AI assistant tasked with generating an Emergency Operations Plan (EOP) for a flood scenario. Your goal is to create a comprehensive plan based on the provided flood data and available resources. Follow these instructions carefully to produce an effective EOP.
-            # First, review the flood data:
-            # <flood_data>
-            # {flood_data}
-            # </flood_data>
-            # Next, examine the resource data:
-            # <resource_data>
-            # {resource_data}
-            # </resource_data>
-            # <location>
-            # {location}
-            # </location>
-            # Analyze the provided data, paying close attention to:
-            # - Water levels and their projected changes
-            # - Areas at highest risk
-            # - Available food and medical supplies
-            # - Number and location of volunteers
-            # - Other critical resources mentioned
-            # Using this information, generate an Emergency Operations Plan (EOP) that addresses the following key areas:
-            # 1. Situation Overview: Summarize the current flood situation and potential risks.
-            # 2. Mission and Objectives: Define the primary goals of the emergency response.
-            # 3. Resource Allocation: Detail how available resources should be distributed and utilized.
-            # 4. Communication Plans: Outline communication strategies and protocols.
-            # When creating the EOP, ensure that each section is concise, clear, and actionable. Use bullet points where appropriate for easy readability. Tailor the plan to the specific flood scenario and available resources described in the input data.
-            # Present your final Emergency Operations Plan within <EOP> tags, using appropriate subsection tags for each major component of the plan. For example:
-            # <EOP>
-            # # Tổng quan tình hình
-            # [Nội dung ở đây]
-            # # Sứ mệnh và mục tiêu
-            # [Nội dung ở đây]
-            # # Phân bổ nguồn lực
-            # [Nội dung ở đây]
-            # # Kế hoạch truyền thông
-            # [Nội dung ở đây]
-            # </EOP>
-            # Remember to base all aspects of the EOP on the provided flood and resource data. Do not include any information or assumptions that are not supported by the given data.
-            # Note: Respond in Vietnamese
-            # """
         )
 
         self.eop_chain = LLMChain(llm=self.llm, prompt=self.eop_prompt_template)
